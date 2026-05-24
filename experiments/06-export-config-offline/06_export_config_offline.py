@@ -25,7 +25,7 @@ def demonstrate_export_data():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-06",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -72,7 +72,7 @@ def demonstrate_sdk_configuration():
     # 方式 1: 直接传入 (文档推荐)
     client = opik.Opik(
         project_name="opik-ob-experiment-06",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
     print(f"  [配置] project_name={client.project_name}")

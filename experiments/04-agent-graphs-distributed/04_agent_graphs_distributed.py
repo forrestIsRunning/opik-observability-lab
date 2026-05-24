@@ -30,7 +30,7 @@ def demonstrate_agent_graph():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-04",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -128,7 +128,7 @@ def demonstrate_mermaid_agent_graph():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-04",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -177,7 +177,7 @@ def demonstrate_distributed_tracing():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-04",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 

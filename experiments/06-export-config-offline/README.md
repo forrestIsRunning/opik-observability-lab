@@ -56,7 +56,7 @@ opik.configure(use_local=False)  # Cloud
 opik.configure(use_local=True)   # 自托管
 
 # 或直接构造
-client = opik.Opik(project_name="my-app", host="http://localhost:5173")
+client = opik.Opik(project_name="my-app", host="http://localhost:5173/api")
 ```
 
 ## Offline Fallback

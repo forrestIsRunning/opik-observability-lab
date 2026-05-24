@@ -21,7 +21,7 @@ def demonstrate_conversation_thread():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-03",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -73,7 +73,7 @@ def demonstrate_media_attachment():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-03",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -103,57 +103,58 @@ def demonstrate_media_attachment():
     trace.end(output={"answer": "Analysis complete"})
     print("  [完成] 方式1: span 创建时传入附件\n")
 
-    # 方式 2: 通过 opik_context.update_current_trace() 传入（文档推荐）
+    # 方式 2: 用低层 API 在 span 上附加（opik_context 需要 @track 装饰器）
     print("=" * 60)
-    print("[实验 3.3] Media Attachment (方式2: update_current_trace)")
+    print("[实验 3.3] Media Attachment (方式2: 低层 API span 附件)")
     print("=" * 60)
 
     trace2 = client.trace(
-        name="attachment_via_context",
+        name="attachment_via_span",
         input={"task": "generate report"},
-        tags=["attachment-context"],
+        tags=["attachment-lowlevel"],
     )
 
-    from opik import opik_context
-
-    # 模拟生成 JSON 报告后附加
     report_bytes = b'{"result": "analysis complete", "confidence": 0.95}'
-    opik_context.update_current_trace(
+    report_span = client.span(
+        trace_id=trace2.id,
+        name="generate_report",
+        type="general",
+        input={"task": "generate"},
         attachments=[
             Attachment(
                 data=report_bytes,
                 file_name="report.json",
                 content_type="application/json",
             )
-        ]
+        ],
     )
+    report_span.end(output={"status": "report generated"})
     trace2.end(output={"status": "done"})
-    print("  [完成] 方式2: 通过 update_current_trace 附加 JSON 报告\n")
+    print("  [完成] 方式2: 低层 API span 附件\n")
 
-    # 方式 3: 从 HTTP 响应下载并附加上传
+    # 方式 3: @track + opik_context (文档推荐方式)
     print("=" * 60)
-    print("[实验 3.4] Media Attachment (方式3: HTTP 响应内容)")
+    print("[实验 3.4] Media Attachment (方式3: @track + opik_context)")
     print("=" * 60)
 
-    trace3 = client.trace(
-        name="http_attachment",
-        input={"url": "https://example.com/image.jpg"},
-        tags=["attachment-http"],
-    )
+    from opik import track, opik_context
 
-    # 模拟从 HTTP 响应获取的图片内容
-    simulated_image = b"fake_image_bytes_from_http"
-    opik_context.update_current_trace(
-        attachments=[
-            Attachment(
-                data=simulated_image,
-                file_name="remote_image.jpg",
-                content_type="image/jpeg",
-            )
-        ]
-    )
-    trace3.end(output={"status": "downloaded"})
-    print("  [完成] 方式3: HTTP 响应内容附件")
+    @track(name="process_with_attachment")
+    def process_with_attachment(query: str) -> str:
+        simulated_image = b"fake_image_bytes_from_http"
+        opik_context.update_current_trace(
+            attachments=[
+                Attachment(
+                    data=simulated_image,
+                    file_name="remote_image.jpg",
+                    content_type="image/jpeg",
+                )
+            ]
+        )
+        return "processed"
+
+    result = process_with_attachment("analyze image")
+    print(f"  [完成] 方式3: @track + opik_context ({result})")
 
     client.end()
 

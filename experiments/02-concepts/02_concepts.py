@@ -16,7 +16,7 @@ def demonstrate_trace_span_relationship():
     print("[实验 2.1] Trace-Span 关系")
     print("=" * 60)
 
-    client = opik.Opik(project_name="opik-ob-experiment-02", host="http://localhost:5173", workspace="default")
+    client = opik.Opik(project_name="opik-ob-experiment-02", host="http://localhost:5173/api", workspace="default")
 
     trace = client.trace(name="concept_demo", input={"demo": "trace_span_relationship"})
 
@@ -46,7 +46,7 @@ def demonstrate_span_types():
     print("[实验 2.2] Span 类型")
     print("=" * 60)
 
-    client = opik.Opik(project_name="opik-ob-experiment-02", host="http://localhost:5173", workspace="default")
+    client = opik.Opik(project_name="opik-ob-experiment-02", host="http://localhost:5173/api", workspace="default")
     trace = client.trace(name="span_types_demo", input={"demo": "span_types"})
 
     # general: 通用步骤

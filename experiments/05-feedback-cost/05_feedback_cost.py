@@ -23,7 +23,7 @@ def demonstrate_feedback_scoring():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-05",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -70,7 +70,7 @@ def demonstrate_feedback_scoring():
 
     client2 = opik.Opik(
         project_name="opik-ob-experiment-05",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -108,7 +108,7 @@ def demonstrate_cost_tracking():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-05",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 

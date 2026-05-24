@@ -39,7 +39,7 @@ def demonstrate_basic_trace():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-01",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -107,7 +107,7 @@ def demonstrate_nested_spans():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-01",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -172,7 +172,7 @@ def demonstrate_thread_traces():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-01",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -223,7 +223,7 @@ def demonstrate_error_tracking():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-01",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 

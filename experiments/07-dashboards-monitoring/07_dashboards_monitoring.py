@@ -22,7 +22,7 @@ def demonstrate_track_decorator():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-07",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -67,7 +67,7 @@ def demonstrate_production_monitoring():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-07",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 

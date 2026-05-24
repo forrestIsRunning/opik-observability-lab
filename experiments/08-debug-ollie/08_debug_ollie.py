@@ -31,7 +31,7 @@ def demonstrate_agent_debugging():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-08",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
@@ -99,7 +99,7 @@ def demonstrate_error_recovery():
 
     client = opik.Opik(
         project_name="opik-ob-experiment-08",
-        host="http://localhost:5173",
+        host="http://localhost:5173/api",
         workspace="default",
     )
 
