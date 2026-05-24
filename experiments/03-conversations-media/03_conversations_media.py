@@ -64,11 +64,11 @@ def demonstrate_conversation_thread():
 
 def demonstrate_media_attachment():
     """
-    在 Span 上附加媒体文件 (Attachment)。
-    生成一个模拟的图片内容来演示。
+    多媒体附件: 3 种方式关联附件到 Trace/Span。
+    文档原文: Attachment(data=..., file_name=..., content_type=...)
     """
     print("=" * 60)
-    print("[实验 3.2] Media Attachment")
+    print("[实验 3.2] Media Attachment (方式1: span 创建时传入)")
     print("=" * 60)
 
     client = opik.Opik(
@@ -77,38 +77,83 @@ def demonstrate_media_attachment():
         workspace="default",
     )
 
+    # 方式 1: 在创建 span 时传入 attachments
     trace = client.trace(
         name="multi_modal_query",
         input={"question": "Analyze this image"},
         tags=["multi-modal", "attachment"],
     )
 
-    # 创建一个模拟的图片附件
-    # 在实际场景中, 这里可以是上传的图片文件
-    from opik.api_objects.attachment import Attachment
+    from opik import Attachment
 
     attachment = Attachment(
         file_name="sample_diagram.png",
-        file_content=b"fake_png_content_for_demonstration",
-        mime_type="image/png",
+        data=b"fake_png_content_for_demonstration",
+        content_type="image/png",
     )
 
-    # 在创建 span 时传入 attachments
     llm_span = trace.span(
-        name="vision_analysis",
-        type="llm",
+        name="vision_analysis", type="llm",
         input={"image": "sample_diagram.png", "question": "Analyze this image"},
-        model="gpt-4o",
-        provider=opik.LLMProvider.OPENAI,
+        model="gpt-4o", provider=opik.LLMProvider.OPENAI,
         attachments=[attachment],
     )
-    llm_span.end(
-        output={"analysis": "This is a diagram showing the architecture..."},
-        usage={"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+    llm_span.end(output={"analysis": "Architecture diagram..."},
+                  usage={"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150})
+    trace.end(output={"answer": "Analysis complete"})
+    print("  [完成] 方式1: span 创建时传入附件\n")
+
+    # 方式 2: 通过 opik_context.update_current_trace() 传入（文档推荐）
+    print("=" * 60)
+    print("[实验 3.3] Media Attachment (方式2: update_current_trace)")
+    print("=" * 60)
+
+    trace2 = client.trace(
+        name="attachment_via_context",
+        input={"task": "generate report"},
+        tags=["attachment-context"],
     )
 
-    trace.end(output={"answer": "Analysis complete"})
-    print("  [完成] 附件已关联到 span (mime_type=image/png)")
+    from opik import opik_context
+
+    # 模拟生成 JSON 报告后附加
+    report_bytes = b'{"result": "analysis complete", "confidence": 0.95}'
+    opik_context.update_current_trace(
+        attachments=[
+            Attachment(
+                data=report_bytes,
+                file_name="report.json",
+                content_type="application/json",
+            )
+        ]
+    )
+    trace2.end(output={"status": "done"})
+    print("  [完成] 方式2: 通过 update_current_trace 附加 JSON 报告\n")
+
+    # 方式 3: 从 HTTP 响应下载并附加上传
+    print("=" * 60)
+    print("[实验 3.4] Media Attachment (方式3: HTTP 响应内容)")
+    print("=" * 60)
+
+    trace3 = client.trace(
+        name="http_attachment",
+        input={"url": "https://example.com/image.jpg"},
+        tags=["attachment-http"],
+    )
+
+    # 模拟从 HTTP 响应获取的图片内容
+    simulated_image = b"fake_image_bytes_from_http"
+    opik_context.update_current_trace(
+        attachments=[
+            Attachment(
+                data=simulated_image,
+                file_name="remote_image.jpg",
+                content_type="image/jpeg",
+            )
+        ]
+    )
+    trace3.end(output={"status": "downloaded"})
+    print("  [完成] 方式3: HTTP 响应内容附件")
 
     client.end()
 

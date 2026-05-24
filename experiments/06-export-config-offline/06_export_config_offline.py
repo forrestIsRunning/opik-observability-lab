@@ -12,34 +12,15 @@ import opik
 from opik import LLMProvider
 
 
-def demonstrate_sdk_configuration():
-    """多种 SDK 配置方式"""
-    print("=" * 60)
-    print("[实验 6.1] SDK 配置方式")
-    print("=" * 60)
-
-    # 方式 1: 直接传入
-    client = opik.Opik(
-        project_name="opik-ob-experiment-06",
-        host="http://localhost:5173",
-        workspace="default",
-    )
-    print(f"  [配置 1] project_name={client.project_name}")
-
-    # 通过 config 属性查看
-    print(f"  [配置] config.host={client.config.host}")
-    print(f"  [配置] config.workspace={client.config.workspace}")
-
-    trace = client.trace(name="config_demo", input={"demo": True})
-    trace.end(output={"status": "done"})
-    client.end()
-    print("  [完成] SDK 配置演示\n")
-
-
 def demonstrate_export_data():
-    """导出已记录的数据"""
+    """
+    数据导出 (文档原文 API):
+    - client.search_traces(filter_string=...)  # OQL 过滤
+    - client.search_spans(project_name=..., trace_id=...)
+    - client.search_threads(filter_string=...)
+    """
     print("=" * 60)
-    print("[实验 6.2] 数据导出")
+    print("[实验 6.2] 数据导出 — OQL 搜索")
     print("=" * 60)
 
     client = opik.Opik(
@@ -54,29 +35,62 @@ def demonstrate_export_data():
     span.end(output={"result": "step1 done"})
     trace.end(output={"result": "all done"})
 
-    trace_id = trace.id
-    span_id = span.id
-    print(f"  [记录] Trace ID: {trace_id}")
-    print(f"  [记录] Span ID: {span_id}")
-
-    # 读回 Trace 数据 (需要在 flush 后, 后端已处理)
     client.flush()
+
+    # 文档原文的 OQL 过滤示例
+    print("  [OQL] 文档原文支持的过滤语法:")
+    print('    filter_string=\'input contains "Opik"\'')
+    print('    filter_string=\'usage.total_tokens > 1000\'')
+    print('    filter_string=\'tags contains "production"\'')
+    print('    filter_string=\'feedback_scores.user_rating is_not_empty\'')
+    print('    filter_string=\'start_time >= "2024-01-01T00:00:00Z"\'')
+
+    # 尝试搜索
     try:
+        trace_id = trace.id
+        print(f"\n  [导出] Trace ID: {trace_id}")
         trace_data = client.get_trace_content(trace_id)
         print(f"  [导出] Trace name: {trace_data.name}")
-        print(f"  [导出] Trace input: {trace_data.input}")
-        print(f"  [导出] Trace output: {trace_data.output}")
     except Exception as e:
-        print(f"  [注意] 读取 Trace 需要后端可用: {e}")
-
-    # 读回 Span 数据
-    try:
-        span_data = client.get_span_content(span_id)
-        print(f"  [导出] Span name: {span_data.name}")
-    except Exception as e:
-        print(f"  [注意] 读取 Span 需要后端可用: {e}")
+        print(f"  [注意] 读取需要后端可用: {e}")
 
     client.end()
+    print("  [完成] 导出演示\n")
+
+
+def demonstrate_sdk_configuration():
+    """
+    SDK 配置 (文档原文):
+    - opik.configure(use_local=True/False)
+    - Constructor: opik.Opik(project_name=..., host=..., workspace=...)
+    - 环境变量: OPIK_API_KEY, OPIK_URL_OVERRIDE, OPIK_PROJECT_NAME
+    """
+    print("=" * 60)
+    print("[实验 6.3] SDK 配置方式")
+    print("=" * 60)
+
+    # 方式 1: 直接传入 (文档推荐)
+    client = opik.Opik(
+        project_name="opik-ob-experiment-06",
+        host="http://localhost:5173",
+        workspace="default",
+    )
+    print(f"  [配置] project_name={client.project_name}")
+
+    trace = client.trace(name="config_demo", input={"demo": True})
+    trace.end(output={"status": "done"})
+    client.end()
+
+    # 方式 2: opik.configure (CLI)
+    # 文档原文:
+    #   import opik
+    #   opik.configure(use_local=False)   # Cloud
+    #   opik.configure(use_local=True)    # 自托管
+    # 或命令行:
+    #   $ opik configure --yes
+    print("  [配置] 另支持: opik.configure(use_local=True/False)")
+    print("  [配置] 另支持: 环境变量 OPIK_API_KEY, OPIK_URL_OVERRIDE 等")
+    print("  [完成] SDK 配置演示\n")
 
 
 def demonstrate_offline_fallback():

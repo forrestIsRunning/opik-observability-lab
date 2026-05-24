@@ -1,29 +1,42 @@
-# 03 — Log Conversations & Media
+# 03 — Log Conversations & Media Attachments
 
-## Conversations (对话)
+> 基于真实文档更新
 
-Opik 用 `thread_id` 将多个 Trace 关联成一个对话线程。这是实现多轮对话可观测性的关键机制。
+## Conversations (Threads)
 
-### 最佳实践
+Threads 通过 `thread_id` 将多个 Trace 归组为对话线程。
 
-| 实践 | 说明 |
-|------|------|
-| **同一 thread_id 跨 Trace** | 同一对话的所有轮次用同一 `thread_id` |
-| **thread_id 需全局唯一** | 每个 project 内 thread_id 唯一 |
-| **在 Trace 创建时传入** | `client.trace(thread_id=...)` |
-| **trace.end() 也可以传** | 也可以在 end() 时更新 thread_id |
+### 文档关键点
 
-## Media & Attachments (媒体)
+- **thread_id**: 用户自定义，每个 project 内唯一
+- **设置方式**: `client.trace(thread_id=...)` 或 `@opik.track` 传 `opik_args={"trace": {"thread_id": ...}}`
+- **UI 查看**: Project → Threads tab
+- **线程级反馈**: 支持对整条线程打分
+- **Cool down**: 线程在线评分冷却期默认 15 分钟
+- **过滤运算符**: `=`, `!=`, `contains`, `starts_with`, `ends_with`, `>`, `<`
 
-Opik 支持在 Trace/Span 上附加文件（图片、PDF 等），通过 `Attachment` 类实现。
+## Media Attachments
 
-### 最佳实践
+`Attachment(data=..., file_name=..., content_type=...)`:
+- `data`: 文件路径、原始 bytes、或 base64 编码字符串
+- `file_name`: bytes 模式必填
+- `content_type`: MIME 类型
 
-| 实践 | 说明 |
-|------|------|
-| **Attachment 对象创建** | `Attachment(file_path=...或 content=..., mime_type=...)` |
-| **在 span() 时传入** | `span = trace.span(attachments=[...])` |
-| **支持二进制内容** | 直接传 `content` bytes 或文件路径 |
-| **自动上传** | SDK 会自动上传并关联到 span |
+### 支持预览的 MIME 类型
 
-> **注意**: Attachment 只能在 span 创建时传入，不能通过 update/end 追加。
+- Image: `image/jpeg`, `image/png`, `image/gif`, `image/svg+xml`
+- Video: `video/mp4`, `video/webm`
+- Audio: `audio/wav`, `audio/vorbis`, `audio/x-wav`
+- Text: `text/plain`, `text/markdown`
+- PDF: `application/pdf`
+- Other: `application/json`, `application/octet-stream`
+
+### 上传方式
+
+1. **文件路径**: `Attachment(data="/path/to/file", content_type="image/png")`
+2. **原始 bytes**: `Attachment(data=image_bytes, file_name="img.png", content_type="image/png")`
+3. **HTTP 响应**: `httpx.get(url).content` → Attachment
+4. **生成内容**: `json.dumps(data).encode("utf-8")` → Attachment
+5. **Client 直接**: `client.span(attachments=[Attachment(...)])`
+6. **Context 更新**: `opik_context.update_current_trace(attachments=[Attachment(...)])`
+7. **AttachmentClient**: 程序化管理（列表、下载、上传，适用于 >50MB 文件）

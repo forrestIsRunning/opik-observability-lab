@@ -117,13 +117,13 @@ def demonstrate_agent_graph():
     client.end()
 
 
-def demonstrate_distributed_tracing():
+def demonstrate_mermaid_agent_graph():
     """
-    模拟分布式追踪: 服务 A → 服务 B → 服务 C
-    通过 get_distributed_trace_headers() 传播上下文。
+    文档原文支持的 Agent Graph 方式:
+    在 metadata 中嵌入 Mermaid 图定义，UI 渲染为可视化图表。
     """
     print("=" * 60)
-    print("[实验 4.2] 分布式追踪 (模拟)")
+    print("[实验 4.2] Mermaid Agent Graph (文档推荐方式)")
     print("=" * 60)
 
     client = opik.Opik(
@@ -132,31 +132,78 @@ def demonstrate_distributed_tracing():
         workspace="default",
     )
 
-    # ----- 服务 A: API Gateway -----
     trace = client.trace(
-        name="api_gateway",
+        name="mermaid_agent_graph",
+        input={"query": "What's the weather in Tokyo?"},
+        metadata={
+            "_opik_graph_definition": {
+                "format": "mermaid",
+                "data": (
+                    "graph TD;"
+                    "U[User]-->A[Agent];"
+                    "A-->L[LLM];"
+                    "L-->|generate|R[Response];"
+                    "A-->T[Tool: WeatherAPI];"
+                    "T-->L;"
+                    "L-->A;"
+                    "A-->U;"
+                ),
+            }
+        },
+        tags=["agent-graph", "mermaid"],
+    )
+    trace.end(output={"response": "Tokyo: 22°C, Sunny"})
+    print("  [完成] Mermaid Agent Graph 已记录到 metadata")
+    print("  [提示] 在 UI 中点击 'Show Agent Graph' 查看可视化")
+
+    client.end()
+
+
+def demonstrate_distributed_tracing():
+    """
+    文档原文的分布式追踪 API:
+    - 客户端: opik_context.get_distributed_trace_headers()
+    - 服务端: opik_distributed_trace_headers=request.headers
+    """
+    print("=" * 60)
+    print("[实验 4.3] 分布式追踪 (文档 API)")
+    print("=" * 60)
+
+    # 模拟客户端调用
+    # 文档原文:
+    # headers = {}
+    # headers.update(opik_context.get_distributed_trace_headers())
+    # response = requests.post("http://.../generate", headers=headers)
+
+    client = opik.Opik(
+        project_name="opik-ob-experiment-04",
+        host="http://localhost:5173",
+        workspace="default",
+    )
+
+    trace = client.trace(
+        name="distributed_request",
         input={"request": "GET /api/report"},
         tags=["distributed-trace"],
     )
     span_a = trace.span(name="service_a:auth", type="tool", input={"token": "valid"})
     span_a.end(output={"user_id": "user_001"})
 
-    # 获取分布式追踪 headers (模拟传给服务 B)
-    span_b = trace.span(name="service_a:call_service_b", type="tool", input={"endpoint": "/internal/b"})
-    headers = span_b.get_distributed_trace_headers()
-    print(f"  [传播] Trace ID: {headers['opik_trace_id']}")
-    print(f"  [传播] Parent Span ID: {headers['opik_parent_span_id']}")
-    span_b.end(output={"service_b_response": "ok"})
+    # 获取分布式追踪 headers (文档 API)
+    from opik import opik_context
+    headers = {}
+    headers.update(opik_context.get_distributed_trace_headers())
+    print(f"  [客户端] opik_trace_id={headers.get('opik_trace_id')}")
+    print(f"  [客户端] opik_parent_span_id={headers.get('opik_parent_span_id')}")
+    print(f"  [传播] Headers 通过 HTTP 传给下游服务")
 
     trace.end(output={"response": "200 OK"})
-    print("  [完成] 分布式追踪 headers 已生成")
-
-    # headers 可以序列化后通过 HTTP/gRPC 传给下游服务
-    print(f"  下游服务收到 headers: {dict(headers)}")
+    print("  [完成] 分布式追踪")
 
     client.end()
 
 
 if __name__ == "__main__":
     demonstrate_agent_graph()
+    demonstrate_mermaid_agent_graph()
     demonstrate_distributed_tracing()

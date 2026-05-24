@@ -1,16 +1,16 @@
-# 05 — User Feedback & Cost Tracking
+# 05 — Annotate Traces (User Feedback) & Cost Tracking
 
-## User Feedback (用户反馈)
+> 基于真实文档更新。文档中该章节名为 "Annotate Traces" 而非 "Log User Feedback"
 
-Opik 支持对 Trace 和 Span 记录反馈评分，用于质量评估和监控。
+## Annotate Traces
 
-### 核心 API
+### SDK 打分方式
 
 ```python
-# 方式 1: 在 Trace/Span 对象上直接打分
-trace.log_feedback_score(name="helpfulness", value=5, category_name="good", reason="Accurate answer")
+# 方式 1: 在 Trace/Span 上直接打分
+trace.log_feedback_score(name="quality", value=0.9, reason="Good answer")
 
-# 方式 2: 批量打分 (ID 已知即可，不依赖对象存在)
+# 方式 2: 批量打分
 client.log_traces_feedback_scores([
     {"id": trace_id, "name": "accuracy", "value": 0.95, "reason": "Correct"}
 ])
@@ -18,37 +18,53 @@ client.log_spans_feedback_scores([...])
 client.log_threads_feedback_scores([...])
 ```
 
-### 最佳实践
+### UI 标注
 
-| 实践 | 说明 |
-|------|------|
-| **评分标准化** | 固定评分范围（如 1-5 或 0-1），便于聚合 |
-| **命名规范** | `accuracy`、`helpfulness`、`relevance` 等 |
-| **category_name** | 分类评分用 category_name 区分 |
-| **reason** | 记录评分原因，便于复盘 |
-| **批量打分** | 后台上报用批量 API，性能更好 |
-| **打分时机** | 可以在 Trace 结束后任意时间打分 |
+- 在 Trace 页面点击 `Annotate` 按钮
+- 支持多团队成员标注，显示平均值
+- 支持标注原因（reason）
 
-## Cost Tracking (成本追踪)
+### Online Evaluation
 
-Opik 通过在 Span 上记录 `usage`、`model`、`provider`、`total_cost` 来实现成本追踪。
+Opik 支持 LLM as a Judge 自动评分:
+1. 在平台定义评估规则
+2. 自动对所有（或采样）Trace 打分
+3. 支持 Trace-level 和 Thread-level 规则
+4. 冷却期结束后自动执行
 
-### 支持的 Provider
+### Manual Evaluation
 
-`opik.LLMProvider` 枚举:
-- `OPENAI` — OpenAI 模型
-- `ANTHROPIC` — Anthropic Claude
-- `GOOGLE_VERTEXAI` — Google VertexAI
-- `GOOGLE_AI` — Google AI
-- `GROQ` — Groq
-- `BEDROCK` — AWS Bedrock
-- `ANTHROPIC_VERTEXAI` — Anthropic on VertexAI
+- 从 Traces 页面选择 Traces → "Evaluate"
+- 从 Threads 页面选择 Threads → "Evaluate"
+- 绕过采样率，对特定 Trace 执行规则
 
-### 最佳实践
+## Cost Tracking
 
-| 实践 | 说明 |
-|------|------|
-| **Provider + Model 必填** | 自动成本计算依赖这两个字段 |
-| **usage 用 OpenAI 格式** | `prompt_tokens`、`completion_tokens`、`total_tokens` |
-| **total_cost 覆盖** | 手动指定 `total_cost` 会覆盖自动计算 |
-| **metadata 补充** | 额外计费信息放 metadata |
+Opik 自动为受支持的 Provider 计算成本（USD）。
+
+### 支持自动计算的 Provider
+
+- OpenAI (`openai`) — GPT 系列
+- Anthropic (`anthropic`) — Claude 系列
+- Anthropic on Vertex AI (`anthropic_vertexai`)
+- Google AI (`google_ai`) — Gemini
+- Google Vertex AI (`google_vertexai`)
+- AWS Bedrock (`bedrock`)
+- Groq (`groq`)
+
+### 手动设置成本
+
+```python
+opik_context.update_current_span(
+    provider="openai",
+    model="gpt-3.5-turbo",
+    usage={"prompt_tokens": 4, "completion_tokens": 6, "total_tokens": 10}
+)
+
+# 或直接设置总成本（覆盖自动计算）
+opik_context.update_current_span(total_cost=0.05)
+```
+
+### 批量成本更新（CRON Job 模式）
+
+Opik 支持后期补算成本：`client.search_spans()` 找到未计算成本的 span → 自定义成本算法 → `client.update_span(total_cost=...)`

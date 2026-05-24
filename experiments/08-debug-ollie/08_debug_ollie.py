@@ -13,12 +13,21 @@ from opik import LLMProvider
 
 def demonstrate_agent_debugging():
     """
-    按 Ollie 调试 Agent 的最佳实践来准备数据。
-    关键点: 完整 Span 树 + 思维链 metadata + 错误追踪。
+    Ollie Debug-Fix-Verify 循环 (文档原文):
+    1. Find a failing trace
+    2. Ask Ollie what went wrong
+    3. Let Ollie fix your code
+    4. Verify with a test suite
     """
     print("=" * 60)
-    print("[实验 8.1] Agent 调试数据准备")
+    print("[实验 8.1] Debug-Fix-Verify 循环 — 数据准备")
     print("=" * 60)
+
+    # Ollie 能读取的内容:
+    # - 完整 Span 树 (input/output/latency/tokens/feedback)
+    # - 跨 Trace 对比
+    # - 项目级聚合分析
+    # 所以数据的关键是: 完整的 Span 树 + 清晰的 metadata
 
     client = opik.Opik(
         project_name="opik-ob-experiment-08",
@@ -26,83 +35,57 @@ def demonstrate_agent_debugging():
         workspace="default",
     )
 
+    # 模拟一个失败的 Trace (Ollie 调试入口)
     trace = client.trace(
-        name="ollie_debug_agent",
+        name="failing_agent",
         input={"task": "Book a flight ticket from NYC to London"},
         metadata={
             "agent_version": "v2.1.0",
             "prompt_version": "2026-05-01",
             "session_id": "sess_abc123",
         },
-        tags=["ollie-debug", "agent", "flight-booking"],
+        tags=["ollie-debug", "failing"],
     )
 
-    # Step 1: Agent 思考 (thought)
-    thought_span = trace.span(
-        name="agent:thought",
-        type="general",
-        input={"task": "Book a flight ticket from NYC to London"},
-        metadata={
-            "reasoning": "Need to: 1) Search flights 2) Find best option 3) Book",
-            "plan": ["search_flights", "select_option", "book_ticket"],
-        },
-    )
-    thought_span.end(output={"plan": ["search_flights", "select_option", "book_ticket"]})
-    print("  [Step 1] Agent 已规划")
+    # Agent 思考
+    thought = trace.span(name="agent:thought", type="general",
+                         input={"task": "Book flight NYC→London"},
+                         metadata={"reasoning": "Need search then book"})
+    thought.end(output={"plan": ["search", "select", "book"]})
 
-    # Step 2: 工具调用 — 搜索航班
-    search_span = trace.span(
-        name="tool:search_flights",
-        type="tool",
-        input={"from": "NYC", "to": "London", "date": "2026-06-15"},
-        metadata={"api_endpoint": "/api/flights/search", "retry_count": 0},
-    )
-    # 模拟搜索结果
-    search_span.end(output={
-        "flights": [
-            {"flight": "AA100", "price": 450, "duration": "7h"},
-            {"flight": "BA200", "price": 520, "duration": "6.5h"},
-        ],
-        "total_options": 2,
-    })
-    print("  [Step 2] 航班搜索完成")
+    # 工具调用 — 可能失败的地方
+    search = trace.span(name="tool:search_flights", type="tool",
+                        input={"from": "NYC", "to": "London", "date": "2026-06-15"})
+    search.end(output={"flights": [{"flight": "AA100", "price": 450}], "total": 1})
 
-    # Step 3: LLM 分析结果
-    analysis_span = trace.span(
-        name="llm:analyze_options",
-        type="llm",
-        input={"options": "AA100 $450 7h, BA200 $520 6.5h", "criteria": "best value"},
-        model="gpt-4",
-        provider=LLMProvider.OPENAI,
-    )
-    analysis_span.end(
-        output={"selected": "AA100", "reason": "Best price with reasonable duration"},
-        usage={"prompt_tokens": 80, "completion_tokens": 30, "total_tokens": 110},
-    )
-    print("  [Step 3] LLM 已选择最优")
+    # LLM 调用
+    llm = trace.span(name="llm:analyze", type="llm",
+                     input={"options": "AA100 $450"},
+                     model="gpt-4", provider=opik.LLMProvider.OPENAI)
+    llm.end(output={"selected": "AA100", "reason": "Best price"},
+             usage={"prompt_tokens": 80, "completion_tokens": 30, "total_tokens": 110})
 
-    # Step 4: 预订操作
-    booking_span = trace.span(
-        name="tool:book_flight",
-        type="tool",
-        input={"flight": "AA100", "passenger": "John Doe"},
-        metadata={"booking_api": "/api/bookings/create"},
-    )
-    booking_span.end(output={
-        "booking_id": "BK-12345",
-        "status": "confirmed",
-        "total_price": 450.00,
-    })
-    print("  [Step 4] 航班已预订")
-
-    trace.end(output={
-        "result": "Booked AA100 NYC→London",
-        "booking_ref": "BK-12345",
-        "total_cost": 450.00,
-    })
-    print("  [完成] Agent 调试数据已准备\n")
+    # 预订 — 模拟失败
+    import traceback as tb
+    try:
+        raise ConnectionError("Booking API timeout after 5s")
+    except ConnectionError as e:
+        booking = trace.span(name="tool:book_flight", type="tool",
+                             input={"flight": "AA100", "booking_api": "/api/bookings"})
+        booking.end(error_info={
+            "exception_type": "ConnectionError",
+            "message": str(e),
+            "traceback": tb.format_exc(),
+        })
+        trace.end(error_info={
+            "exception_type": "ConnectionError",
+            "message": str(e),
+            "traceback": tb.format_exc(),
+        })
+        print("  [失败] Booking API timeout — 完整的 Span 树已记录")
 
     client.end()
+    print("  [完成] Ollie 可以读取此 Trace 并分析根因\n")
 
 
 def demonstrate_error_recovery():

@@ -1,31 +1,36 @@
 # 01 — Tracing Overview & Getting Started
 
+> 基于真实文档更新
+
 ## 底层逻辑
 
-Opik 的可观测性基于 **Trace**（跟踪）和 **Span**（跨度） 两级结构。一个 Trace 代表一次完整的 LLM 调用链路，Span 则是链路中的独立步骤。
+Opik 提供三种接入方式:
+1. **AI Coding Agent**（推荐）— 安装 `opik-skills`，用 `/instrument` 命令自动插桩
+2. **Opik Connect** — 从 Dashboard 用 Ollie 自动设置追踪
+3. **手动 SDK** — `@opik.track` 装饰器或低层 API
 
-## 最佳实践
+## 核心流程
 
-| 实践 | 说明 |
-|------|------|
-| **Trace 粒度 = 一次用户请求** | 每个外部请求创建一个 Trace，内部步骤用 Span |
-| **Span 类型** | `general`、`llm`、`tool`、`guardrail` 四种类型，选对类型便于 UI 过滤 |
-| **Always call end()** | 不调用 end() 会导致 Trace 在 UI 上显示为"进行中" |
-| **metadata 传递上下文** | 把 environment、session_id、user_id 等放在 metadata 中 |
-| **tags 做分类** | 用 tags 标记版本、环境、实验组 |
-| **thread_id 关联多轮** | 多轮对话用 thread_id 把多个 Trace 关联成线程 |
-| **flush 确保落盘** | 程序退出前调用 `client.end()` 确保所有数据已发送 |
-
-## Hands-on 实验
-
-```bash
-# 运行 01_basic_tracing.py
-uv run python experiments/01-overview-getting-started/01_basic_tracing.py
+```
+opik connect --project <NAME>   # 1. 关联项目
+@opik.track                     # 2. 插桩代码
+def my_agent(user_message):
+    ...
+# Trace 自动出现在 Dashboard  # 3. 查看追踪
 ```
 
-代码演示：
-1. Trace 创建 - end - update 全生命周期
-2. Span 嵌套（子 span）
-3. llm 类型 span 的使用
-4. metadata、tags、error_info 的传递
-5. thread_id 多轮关联
+## 最佳实践（来自文档原文）
+
+| 实践 | 原文引用 |
+|------|----------|
+| **Trace 边界清晰** | "Define clear boundaries — typically a complete user interaction" |
+| **Span 命名有意义** | "Choose descriptive names that clearly indicate what operation is being performed" |
+| **Thread ID 关联对话** | "Use consistent thread IDs for related interactions" |
+| **持续监控** | "Set up alerts to monitor trace performance, error rates, and costs" |
+| **用 Trace 做优化** | "Regularly analyze traces to identify optimization opportunities" |
+| **关注关键路径** | "Start with basic tracing, gradually add more detail — don't trace everything at once" |
+| **敏感数据保护** | "Be mindful of PII and sensitive data in traces" |
+
+## 可捕获的数据
+
+Traces & Spans → Cost tracking → Media & attachments → User feedback → Agent graphs

@@ -1,40 +1,67 @@
 # 04 — Agent Graphs & Distributed Traces
 
-## Agent Graphs (Agent 图)
+> 基于真实文档更新
 
-Agent 应用中多个 Agent 协同工作形成调用图。Opik 的 Span 嵌套天然支持图结构。
+## Agent Graphs
 
-### 最佳实践
+Opik 支持三种方式记录 Agent 图：
 
-| 实践 | 说明 |
-|------|------|
-| **Span 树 = Agent 调用图** | 每个 Agent 调用作为一个 Span，父子关系构成图 |
-| **Span type = tool** | Agent 调用用 `type="tool"` |
-| **name 清晰标识** | Span name 用 `agent:xxx` 命名空间 |
-| **metadata 传 Agent 状态** | 在 metadata 中记录 Agent 的思考过程 |
-
-## Distributed Traces (分布式追踪)
-
-跨服务的 Trace 传播通过 `get_distributed_trace_headers()` 实现。
-
-### 核心 API
+1. **LangGraph** — `OpikTracer(graph=app.get_graph(xray=True))`
+2. **Google ADK** — 自动生成，无需额外配置
+3. **Manual Tracking** — 在 metadata 中嵌入 Mermaid 图定义：
 
 ```python
-# 服务 A (调用方)
-headers = span.get_distributed_trace_headers()
-# 将 headers 通过 RPC/HTTP 传给服务 B
-
-# 服务 B (被调用方)
-# 需要手动提取 headers 并传给 opik_context
-from opik import opik_context
-headers = DistributedTraceHeadersDict(opik_trace_id=..., opik_parent_span_id=...)
+opik_context.update_current_trace(
+    metadata={
+        "_opik_graph_definition": {
+            "format": "mermaid",
+            "data": "graph TD; U[User]-->A[Agent]; A-->L[LLM]; L-->A;"
+        }
+    }
+)
 ```
 
-### 最佳实践
+## Distributed Traces
 
-| 实践 | 说明 |
-|------|------|
-| **自动传播** | HTTP headers 或 RPC metadata 传递 |
-| **opik_trace_id 不变** | 同一 Trace 的所有服务共享 opik_trace_id |
-| **opik_parent_span_id** | 指向调用方的 span |
-| **兼容 OpenTelemetry** | Opik 提供 OpenTelemetry 集成 (`opik.integrations.otel`) |
+### 核心 API（来自文档）
+
+**客户端**（发送方）:
+```python
+from opik import track, opik_context
+
+@track()
+def my_client_function(prompt: str) -> str:
+    headers = {}
+    headers.update(opik_context.get_distributed_trace_headers())
+    response = requests.post("http://.../generate", headers=headers, json={"prompt": prompt})
+    return response.json()
+```
+
+**服务端**（接收方）:
+```python
+@track()
+def my_llm_application():
+    pass
+
+@app.post("/generate")
+def generate_llm_response(request: Request) -> str:
+    return my_llm_application(opik_distributed_trace_headers=request.headers)
+```
+
+**Context Manager 方式**（更明确的控制）:
+```python
+from opik.decorator.context_manager import distributed_headers
+
+with distributed_headers(headers, flush=False):
+    result = my_llm_application()
+```
+
+### OpenTelemetry 桥接
+
+```python
+from opik.integrations.otel import OpikSpanProcessor, distributed_trace
+
+provider.add_span_processor(OpikSpanProcessor())
+# ...
+distributed_trace.attach_to_parent(span, dict(request.headers))
+```

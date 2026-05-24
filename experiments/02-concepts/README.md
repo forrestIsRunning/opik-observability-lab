@@ -1,29 +1,39 @@
 # 02 — Opik 核心概念
 
+> 基于真实文档更新。新增：Threads、Metrics、Optimization、Evaluation
+
 ## 概念体系
 
-| 概念 | 说明 |
-|------|------|
-| **Trace** | 一次完整请求/操作的端到端记录。包含 input、output、metadata、tags |
-| **Span** | Trace 内的一个步骤单元。支持嵌套（子 span）形成调用树 |
-| **Span 类型** | `general`、`llm`、`tool`、`guardrail` — UI 中按类型过滤和着色 |
-| **Project** | Trace 和 Span 的容器。用于隔离不同应用/环境的数据 |
-| **Feedback Score** | 对 Trace/Span 的质量评分（数值或分类），用于评估 |
-| **Dataset** | 数据集，用于评估测试 |
-| **Prompt** | 可版本管理的 Prompt 模板 |
-| **Thread** | 通过 `thread_id` 将多个 Trace 关联为一次多轮对话 |
+| 概念 | 定义（文档原文） |
+|------|------------------|
+| **Trace** | "A complete execution path for a single interaction with an LLM or agent" |
+| **Span** | "Individual operations or steps within a trace — hierarchical structure" |
+| **Thread** | "A collection of related traces that form a coherent conversation or workflow" |
+| **Metric** | "Quantitative measurements that provide objective assessments of your AI models' performance" |
+| **Optimization** | "The systematic process of refining and evaluating LLM prompts and configurations" |
+| **Evaluation** | "A framework for systematically testing your prompts and models against datasets" |
 
-## 核心 API 映射
+## Span 类型
 
-```
-opik.Opik(project_name=..., host=..., workspace=...)
-  ├── .trace(...)       → Trace 对象
-  │   ├── .span(...)    → Span 对象（子 span 容器）
-  │   ├── .end(...)     → 结束 Trace
-  │   └── .log_feedback_score(...) → 打分
-  ├── .span(...)        → 独立 Span（直接配属到 Trace）
-  ├── .flush(...)       → 强制刷新
-  ├── .end(...)         → 关闭客户端
-  ├── .get_trace_content(id)  → 读取 Trace
-  └── .get_span_content(id)   → 读取 Span
+- `general` — 通用步骤
+- `llm` — LLM 调用
+- `tool` — 工具/函数调用
+- `guardrail` — 安全/内容过滤
+
+## Core API 映射
+
+```python
+client = opik.Opik(project_name=..., host=...)
+client.trace(name=..., input=..., thread_id=..., tags=...)
+  ├── .span(name=..., type=..., model=..., provider=...)
+  │   ├── .end(output=..., usage=...)
+  │   ├── .log_feedback_score(name=..., value=...)
+  │   └── .span(...)  # 嵌套子 span
+  ├── .end(output=..., metadata=...)
+  └── .log_feedback_score(name=..., value=..., reason=...)
+
+client.log_traces_feedback_scores([{id, name, value, reason}])
+client.search_traces(project_name=..., filter_string=...)
+client.get_trace_content(id)
+client.end()  # 确保数据刷新
 ```
