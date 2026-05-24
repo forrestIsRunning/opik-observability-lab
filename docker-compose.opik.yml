@@ -1,0 +1,111 @@
+services:
+  opik-clickhouse:
+    image: clickhouse/clickhouse-server:25.3.6.56-alpine
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - opik-clickhouse-data:/var/lib/clickhouse
+
+  opik-redis:
+    image: redis:7.2.4-alpine3.19
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  opik-mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: opik
+      MYSQL_DATABASE: opik
+      MYSQL_USER: opik
+      MYSQL_PASSWORD: opik
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - opik-mysql-data:/var/lib/mysql
+
+  opik-minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: opik
+      MINIO_ROOT_PASSWORD: opikopik
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - opik-minio-data:/data
+
+  opik-backend:
+    image: ghcr.io/comet-ml/opik/opik-backend:latest
+    depends_on:
+      opik-clickhouse:
+        condition: service_healthy
+      opik-redis:
+        condition: service_healthy
+      opik-mysql:
+        condition: service_healthy
+      opik-minio:
+        condition: service_healthy
+    environment:
+      STATE_DB_URL: jdbc:mysql://opik-mysql:3306/opik
+      STATE_DB_USER: opik
+      STATE_DB_PASS: opik
+      ANALYTICS_DB_HOST: opik-clickhouse
+      ANALYTICS_DB_PORT: 8123
+      ANALYTICS_DB_USERNAME: default
+      ANALYTICS_DB_PASS: ""
+      ANALYTICS_DB_DATABASE_NAME: opik
+      REDIS_URL: redis://opik-redis:6379
+      S3_ENDPOINT: http://opik-minio:9000
+      S3_ACCESS_KEY: opik
+      S3_SECRET_KEY: opikopik
+      S3_BUCKET: opik
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/is-alive/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  opik-python-backend:
+    image: ghcr.io/comet-ml/opik/opik-python-backend:latest
+    depends_on:
+      opik-backend:
+        condition: service_healthy
+    environment:
+      OPIK_BACKEND_URL: http://opik-backend:8080
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  opik-frontend:
+    image: ghcr.io/comet-ml/opik/opik-frontend:latest
+    depends_on:
+      opik-backend:
+        condition: service_healthy
+      opik-python-backend:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  opik-clickhouse-data:
+  opik-mysql-data:
+  opik-minio-data:
