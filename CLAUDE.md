@@ -38,11 +38,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 opik-observability-lab/
-├── experiments/              # 8 个实验模块（每个含 README + .py）
-├── _docs_extracted/          # 15 篇官方文档 Markdown（已提交）
-├── docker-compose.opik.yml   # 本地 Opik 服务
-├── pyproject.toml            # uv 项目配置
-├── README.md                 # 项目说明（面向 GitHub）
-├── LICENSE                   # MIT
-└── CLAUDE.md                 # 本文件
+├── experiments/
+│   ├── 01-tracing-fundamentals/      # trace/span 生命周期 + thread_id + attachments
+│   ├── 02-distributed-tracing/       # 跨服务 trace 头传播 + Mermaid agent graph
+│   ├── 03-ops-feedback-cost-export/  # feedback scoring + OQL + @track 生产模式
+│   ├── 04-rag-evaluation/            # RAG eval + 机器评分 → Annotation Queue
+│   ├── 05-prompt-library/            # Prompt V1→V2→V3 演进 + 回滚工作流
+│   └── 06-local-runner-and-pitfalls/ # entrypoint primitives + LiteLLM 孤儿 trace
+├── _docs_extracted/                  # 15 篇官方文档 Markdown（已提交）
+├── docker-compose.opik.yml           # 本地 Opik 服务
+├── pyproject.toml                    # uv 项目配置
+├── README.md                         # 项目说明（面向 GitHub）
+├── LICENSE                           # MIT
+└── CLAUDE.md                         # 本文件
 ```

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Opik LLM Observability experiments"
 requires-python = ">=3.11, <3.13"
 dependencies = [
-    "opik>=1.0.0",
+    "opik>=2.0.46",
 ]
 
 [tool.ruff]
