@@ -1,11 +1,11 @@
 """
-实验 10-1: 注册 Prompt 到 Opik Prompt Library
+实验 05-1: 注册 Prompt 到 Opik Prompt Library
 
 演示如何把 hard-coded prompts 注册到 Opik，开启版本管理。
 每次运行都会创建新版本（新 commit）。
 
 运行:
-    uv run python experiments/10-prompt-library-management/run_01_register_prompts.py
+    uv run python experiments/05-prompt-library/run_01_register_prompts.py
 
 预期结果:
     在 Opik UI → Prompt Library 中可以看到 3 个 prompt 及其 V1

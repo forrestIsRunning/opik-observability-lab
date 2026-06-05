@@ -13,7 +13,7 @@
     client.delete_dataset(name)                        删整个数据集
 
 运行:
-    uv run python experiments/09-rag-agent-evaluation/run_05_dataset_crud.py
+    uv run python experiments/04-rag-evaluation/run_05_dataset_crud.py
 
 注意:
     本脚本使用独立的临时数据集名（带时间戳），跑完会把它整个删掉，

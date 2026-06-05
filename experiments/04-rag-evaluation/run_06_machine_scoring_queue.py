@@ -13,7 +13,7 @@
     queue.add_traces([trace, ...])                      把待复核 trace 入队
 
 运行:
-    uv run python experiments/09-rag-agent-evaluation/run_06_machine_scoring_queue.py
+    uv run python experiments/04-rag-evaluation/run_06_machine_scoring_queue.py
 
 看结果:
     - Opik UI → 该 trace → Feedback scores 看到 rule_* 机器分

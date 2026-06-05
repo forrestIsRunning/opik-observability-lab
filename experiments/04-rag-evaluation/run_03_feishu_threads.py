@@ -8,7 +8,7 @@
 事件回调里，传入事件里的 chat_id / message_id / root_id 即可。
 
 运行:
-    uv run python experiments/09-rag-agent-evaluation/run_03_feishu_threads.py
+    uv run python experiments/04-rag-evaluation/run_03_feishu_threads.py
 
 看结果:
     Opik UI → Threads → 能看到两条独立 thread，各自含多轮对话

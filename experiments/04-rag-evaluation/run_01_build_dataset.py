@@ -4,7 +4,7 @@
 把黄金问答对写入 Opik Dataset。幂等，可重复跑。
 
 运行:
-    uv run python experiments/09-rag-agent-evaluation/run_01_build_dataset.py
+    uv run python experiments/04-rag-evaluation/run_01_build_dataset.py
 
 看结果:
     打开 Opik UI → 左侧 Datasets → 找到 "rag-agent-golden-qa"

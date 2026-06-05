@@ -1,7 +1,22 @@
-# 实验 09: RAG / Agent 系统的 Opik 评测
+# 实验 04: RAG / Agent 系统的 Opik 评测
 
 > 一个端到端、可复用、**默认无需任何外部 LLM Key** 的 RAG/Agent 评测 demo。
 > 回答三个问题：**怎么建评测集、怎么做 dashboard、飞书 bot 多轮请求怎么归到一条 Opik thread。**
+
+---
+
+## 与 opik-skills 的关系
+
+`comet-ml/opik-skills` 的 `references/evaluation.md` 教你**单点 API**——
+怎么建 dataset、怎么调 `evaluate()` 或 `run_tests()`、有哪些 60+ 内置 metric。
+
+本模块教你**组合方式与 production 闭环**——
+- 评测集 + task + metric 三层怎么搭配
+- 飞书会话 `chat_id` → Opik `thread_id` 的真实映射（skill 没讲）
+- 机器评分 → 不合格自动入 Annotation Queue → 人工 review 的闭环（skill 没讲）
+- Dashboard widget 怎么按 metadata/tags 配（skill 没讲）
+
+读 skill 先理解 API，再看本模块看怎么用在真业务上。
 
 ---
 
@@ -53,7 +68,7 @@
 ## 目录结构
 
 ```
-09-rag-agent-evaluation/
+04-rag-evaluation/
 ├── README.md                    # 本文件
 ├── rag_eval/                    # 可复用包（每个模块都能单独搬走）
 │   ├── settings.py              # Opik 连接配置（单一真源）
@@ -86,7 +101,7 @@ curl http://localhost:5173/api/is-alive/ping     # 预期: {"healthy":true}
 ### 1. 建评测集
 
 ```bash
-uv run python experiments/09-rag-agent-evaluation/run_01_build_dataset.py
+uv run python experiments/04-rag-evaluation/run_01_build_dataset.py
 ```
 
 → Opik UI → **Datasets** → 看到 `rag-agent-golden-qa`，5 条样本。
@@ -94,7 +109,7 @@ uv run python experiments/09-rag-agent-evaluation/run_01_build_dataset.py
 ### 2. 跑评测（默认离线指标，无需任何 Key）
 
 ```bash
-uv run python experiments/09-rag-agent-evaluation/run_02_evaluate.py
+uv run python experiments/04-rag-evaluation/run_02_evaluate.py
 ```
 
 → 终端打印每条样本分数 + 平均分；Opik UI → **Experiments** 看 dashboard。
@@ -102,7 +117,7 @@ uv run python experiments/09-rag-agent-evaluation/run_02_evaluate.py
 ### 3. 模拟飞书多轮 → thread
 
 ```bash
-uv run python experiments/09-rag-agent-evaluation/run_03_feishu_threads.py
+uv run python experiments/04-rag-evaluation/run_03_feishu_threads.py
 ```
 
 → Opik UI → **Threads** → 看到两条 thread（会话 A 三轮、会话 B 两轮）。
@@ -111,7 +126,7 @@ uv run python experiments/09-rag-agent-evaluation/run_03_feishu_threads.py
 
 ```bash
 RAG_EVAL_USE_LLM_METRICS=1 OPENAI_API_KEY=sk-... \
-    uv run python experiments/09-rag-agent-evaluation/run_04_evaluate_threads.py
+    uv run python experiments/04-rag-evaluation/run_04_evaluate_threads.py
 ```
 
 → 每条 thread 上多出 coherence / frustration 反馈分。
@@ -120,13 +135,13 @@ RAG_EVAL_USE_LLM_METRICS=1 OPENAI_API_KEY=sk-... \
 
 ```bash
 # 5) 数据集增删改查（用临时数据集，跑完自动删除，不污染正式集）
-uv run python experiments/09-rag-agent-evaluation/run_05_dataset_crud.py
+uv run python experiments/04-rag-evaluation/run_05_dataset_crud.py
 
 # 6) 自定义规则机器评分 + 把不合格回答路由到人工标注队列
-uv run python experiments/09-rag-agent-evaluation/run_06_machine_scoring_queue.py
+uv run python experiments/04-rag-evaluation/run_06_machine_scoring_queue.py
 
 # 7) 造一批带 metadata/tags/feedback 的 trace，并打印 UI 自定义 widget 配方
-uv run python experiments/09-rag-agent-evaluation/run_07_dashboard_seed.py
+uv run python experiments/04-rag-evaluation/run_07_dashboard_seed.py
 ```
 
 ---

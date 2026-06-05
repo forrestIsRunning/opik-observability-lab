@@ -11,7 +11,7 @@
 
 运行:
     RAG_EVAL_USE_LLM_METRICS=1 OPENAI_API_KEY=sk-... \
-        uv run python experiments/09-rag-agent-evaluation/run_04_evaluate_threads.py
+        uv run python experiments/04-rag-evaluation/run_04_evaluate_threads.py
 
 看结果:
     Opik UI → Threads → 每条 thread 上会多出 coherence / frustration 反馈分

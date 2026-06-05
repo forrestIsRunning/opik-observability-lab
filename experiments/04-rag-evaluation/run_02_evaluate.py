@@ -12,11 +12,11 @@ task 函数签名固定为 task(dataset_item: dict) -> dict。
 
 运行:
     # 默认：只跑离线指标，无需任何 LLM Key
-    uv run python experiments/09-rag-agent-evaluation/run_02_evaluate.py
+    uv run python experiments/04-rag-evaluation/run_02_evaluate.py
 
     # 可选：额外启用 LLM 裁判指标（需要 LLM Key）
     RAG_EVAL_USE_LLM_METRICS=1 OPENAI_API_KEY=sk-... \
-        uv run python experiments/09-rag-agent-evaluation/run_02_evaluate.py
+        uv run python experiments/04-rag-evaluation/run_02_evaluate.py
 
 看结果（这就是 "dashboard"）:
     Opik UI → Experiments → 找到本次 experiment → 看每条样本的分数、平均分、趋势

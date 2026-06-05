@@ -1,11 +1,11 @@
 """
-实验 10-3: Prompt 版本演进工作流
+实验 05-3: Prompt 版本演进工作流
 
 演示完整的 prompt 生命周期：
 V1 创建 → V2 迭代 → 版本对比 → 回滚 → 批量管理。
 
 运行:
-    uv run python experiments/10-prompt-library-management/run_03_prompt_evolution.py
+    uv run python experiments/05-prompt-library/run_03_prompt_evolution.py
 
 预期结果:
     控制台输出多个版本的注册、对比信息、回滚验证

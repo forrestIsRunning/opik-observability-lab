@@ -1,10 +1,10 @@
 """
-实验 10-2: 在代码中使用 Opik Prompt
+实验 05-2: 在代码中使用 Opik Prompt
 
 演示生产环境最佳实践：pin 特定 commit + 模板填充 + trace 联动。
 
 运行:
-    uv run python experiments/10-prompt-library-management/run_02_use_prompts.py
+    uv run python experiments/05-prompt-library/run_02_use_prompts.py
 
 预期结果:
     控制台输出从 Opik 拉取的 prompt 内容、模板填充结果、trace 记录

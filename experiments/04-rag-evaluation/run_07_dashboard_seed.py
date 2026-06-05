@@ -15,7 +15,7 @@ UI 的 widget 才能按这些维度做"自定义"图表（按 model 分组、按
     client.log_traces_feedback_scores([...])           feedback 分（趋势/分布）
 
 运行:
-    uv run python experiments/09-rag-agent-evaluation/run_07_dashboard_seed.py
+    uv run python experiments/04-rag-evaluation/run_07_dashboard_seed.py
 
 看结果:
     Opik UI → 项目 rag-agent-eval → Insights 标签 → Add new 自建视图，

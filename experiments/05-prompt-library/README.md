@@ -1,4 +1,4 @@
-# 实验 10 — Opik Prompt Library 管理
+# 实验 05 — Opik Prompt Library 管理
 
 > Hard-coded prompts 的版本控制、集中管理和生产级编排方案。像 Git 一样管理 prompt，从此告别"改 prompt = 改代码 + 重新部署"的痛点。
 
@@ -51,7 +51,7 @@ LLM 应用中，prompt 是核心资产，但大多数团队的 prompt 管理还�
 ## 目录结构
 
 ```
-10-prompt-library-management/
+05-prompt-library/
 ├── README.md
 ├── prompt_lib/
 │   ├── __init__.py
@@ -69,7 +69,7 @@ LLM 应用中，prompt 是核心资产，但大多数团队的 prompt 管理还�
 ### 1. 注册 prompt 到 Opik Prompt Library
 
 ```bash
-uv run python experiments/10-prompt-library-management/run_01_register_prompts.py
+uv run python experiments/05-prompt-library/run_01_register_prompts.py
 ```
 
 创建 3 个 prompt，其中 `customer_service_system` 会生成 V1 和 V2 两个版本。前往 UI → Prompt Library 查看。
@@ -77,7 +77,7 @@ uv run python experiments/10-prompt-library-management/run_01_register_prompts.p
 ### 2. 生产级使用演示
 
 ```bash
-uv run python experiments/10-prompt-library-management/run_02_use_prompts.py
+uv run python experiments/05-prompt-library/run_02_use_prompts.py
 ```
 
 演示：
@@ -88,20 +88,29 @@ uv run python experiments/10-prompt-library-management/run_02_use_prompts.py
 ### 3. 版本演进工作流
 
 ```bash
-uv run python experiments/10-prompt-library-management/run_03_prompt_evolution.py
+uv run python experiments/05-prompt-library/run_03_prompt_evolution.py
 ```
 
 演示完整的 prompt 生命周期：V1 创建 → V2 迭代（多订单支持） → V3（情绪检测）→ 版本对比 → 回滚验证。
 
 ## API 参考
 
+> 与 `opik-skills` 推荐 API 对齐 —— `opik.Prompt(...)` / `opik.ChatPrompt(...)` 已 deprecated，
+> 一律走 client 方法。
+
 | 方法 | 说明 |
 |------|------|
-| `opik.Prompt(name=, prompt=, metadata=)` | 创建/注册 prompt，同名不同内容 = 新版本 |
-| `client.get_prompt(name=)` | 获取最新版本 |
-| `client.get_prompt(name=, commit=)` | Pin 到特定版本（生产推荐） |
+| `client.create_prompt(name=, prompt=, metadata=)` | 创建/注册 string prompt，同名不同内容 = 新版本 |
+| `client.create_chat_prompt(name=, messages=, metadata=)` | 创建 multi-turn chat 模板 |
+| `client.get_prompt(name=)` | 获取 string prompt 最新版本 |
+| `client.get_prompt(name=, commit=)` | Pin 到特定 commit（生产推荐） |
+| `client.get_chat_prompt(name=)` | 获取 chat prompt 最新版本 |
 | `prompt.format(**kwargs)` | Mustache 模板填充 |
 | `prompt.commit` | 当前版本的 commit hash |
+| `prompt.metadata` | 同版本绑定的 model / temperature 等参数 |
+
+> Skill 强调：`get_prompt()` 必须在 `@opik.track` 装饰的函数内调用，否则 prompt 版本不会
+> 链接到 trace，UI 看不见 —— 见 `.agents/skills/opik/SKILL.md` 第 226 行 CRITICAL 段。
 
 ## 生产环境最佳实践
 
@@ -135,7 +144,7 @@ system_prompt = client.get_prompt(
 
 ## 进阶：Prompt + Evaluation 联动
 
-实验 09 展示了 evaluation 的能力。结合 Prompt Library：
+实验 04 展示了 evaluation 的能力。结合 Prompt Library：
 1. 用不同 commit 的 prompt 跑同一条 evaluation dataset
 2. 对比各版本的准确率、幻觉率等指标
 3. 数据驱动地决定晋升哪个版本到生产

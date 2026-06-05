@@ -1,10 +1,10 @@
 """
-实验 04: Agent Graphs & Distributed Traces
+实验 02: Agent Graphs & Distributed Traces
 ==========================================
 演示 Agent 调用图和分布式追踪。
 
 运行方式:
-    uv run python experiments/04-agent-graphs-distributed/04_agent_graphs_distributed.py
+    uv run python experiments/02-distributed-tracing/04_agent_graphs_distributed.py
 """
 
 import uuid
